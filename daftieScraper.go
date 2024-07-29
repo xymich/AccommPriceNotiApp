@@ -1,41 +1,29 @@
 package main
 
 import (
-	"time"
+	"fmt"
 
-	"github.com/tebeka/selenium"
-	"github.com/tebeka/selenium/chrome"
+	"github.com/gocolly/colly"
 )
 
 func main() {
-	// Run Chrome browser
-	service, err := selenium.NewChromeDriverService("./chromedriver", 4444)
-	if err != nil {
-		panic(err)
-	}
 
-	time.Sleep(300)
+	scrapeUrl := "https://www.daft.ie"
 
-	defer service.Stop()
+	clt := colly.NewCollector(colly.AllowedDomains("www.daft.ie", "daft.ie"))
 
-	caps := selenium.Capabilities{}
-	caps.AddChrome(chrome.Capabilities{Args: []string{
-		"window-size=1920x1080",
-		"--no-sandbox",
-		"--disable-dev-shm-usage",
-		"disable-gpu",
-		// "--headless", // comment this line to see the browser
-	}})
+	clt.OnHTML("h1.homepage-tagline", func(header *colly.HTMLElement) {
+		fmt.Println(header.Text)
+	})
 
-	driver, err := selenium.NewRemote(caps, "")
-	if err != nil {
-		panic(err)
-	}
+	clt.OnRequest(func(req *colly.Request) {
+		fmt.Printf(fmt.Sprintf("Visiting %s\n", req.URL))
+	})
 
-	driver.Get("https://www.google.com")
+	clt.OnError(func(req *colly.Response, err error) {
+		fmt.Printf("Error while scraping: %s\n", err.Error())
+	})
 
-	time.Sleep(3000)
-
-	driver.Quit()
-
+	clt.Visit(scrapeUrl)
+	fmt.Println(222)
 }
