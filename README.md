@@ -2,11 +2,9 @@ Hallo,
 
 all dependencies are from this guide/repo
 
-**Package**: https://github.com/gocolly/colly
+**Package**: [Chromedp](https://github.com/chromedp/chromedp)
 
-**Guide**: https://www.youtube.com/watch?v=bfVxq-oQA3c // 
-
-**Documentation**: https://pkg.go.dev/github.com/gocolly/colly
+**Documentation**: [Docs](https://pkg.go.dev/github.com/chromedp/chromedp)
 
 **Chromedriver** (not necessary) https://googlechromelabs.github.io/chrome-for-testing/
 
