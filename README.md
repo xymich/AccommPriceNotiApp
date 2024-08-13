@@ -1,13 +1,9 @@
 Hallo,
 
-all dependencies are from this guide/repo
+all dependencies are from this [**package** ](https://github.com/chromedp/chromedp) 
 
-**Package**: https://github.com/gocolly/colly
+all [**Documentation**](https://pkg.go.dev/github.com/chromedp/chromedp) for chromedb package ([above](https://github.com/chromedp/chromedp))
 
-**Guide**: https://www.youtube.com/watch?v=bfVxq-oQA3c // 
-
-**Documentation**: https://pkg.go.dev/github.com/gocolly/colly
-
-**Chromedriver** (not necessary) https://googlechromelabs.github.io/chrome-for-testing/
+link to [**Chromedriver**](https://googlechromelabs.github.io/chrome-for-testing/) *(not necessary)*
 
 im so cool
