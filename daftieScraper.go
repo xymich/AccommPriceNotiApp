@@ -6,7 +6,23 @@ import (
 	"github.com/playwright-community/playwright-go"
 )
 
+var TempForSaleUrl = "https://www.daft.ie/property-for-sale/monaghan"
+var TempForRentUrl = "https://www.daft.ie/property-for-rent/monaghan"
 var PlaywrightContext playwright.BrowserContext
+
+type DaftComponents struct {
+}
+
+func main() {
+	// extra check specifically for server use
+	err := playwright.Install()
+	if err != nil {
+		log.Fatalf("could not install playwright: %v", err)
+	}
+
+	PlaywrightContext = InitializePlaywright()
+
+}
 
 func InitializePlaywright() playwright.BrowserContext {
 	// Installation of browser and OS dependencies
@@ -42,14 +58,4 @@ func InitializePlaywright() playwright.BrowserContext {
 	}
 
 	return context
-}
-
-func main() {
-	err := playwright.Install()
-	if err != nil {
-		log.Fatalf("could not install playwright: %v", err)
-	}
-
-	PlaywrightContext = InitializePlaywright()
-
 }
