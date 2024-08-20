@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/playwright-community/playwright-go"
@@ -31,10 +32,12 @@ func main() {
 	PlaywrightContext = InitializePlaywright()
 	//now we scrape!
 
+	compArr := ExtractComponents(PlaywrightContext)
+	fmt.Print(compArr)
 	PlaywrightContext.Close()
 }
 
-func ExtractDaftComponents(ctx playwright.BrowserContext) (data []DaftComponents) {
+func ExtractComponents(ctx playwright.BrowserContext) (data []DaftComponents) {
 
 	// Created a new page from the context we initialized
 	page, err := ctx.NewPage()
@@ -44,19 +47,38 @@ func ExtractDaftComponents(ctx playwright.BrowserContext) (data []DaftComponents
 	}
 
 	// Navigates to the Corporate Announcements Page
-	if _, err = page.Goto("https://www.bseindia.com/corporates/ann.html", playwright.PageGotoOptions{
+	if _, err = page.Goto(TempForSaleUrl, playwright.PageGotoOptions{
 		WaitUntil: playwright.WaitUntilStateNetworkidle,
 	}); err != nil {
 		log.Fatalf("could not goto: %v", err)
 	}
 
 	// Waits until the full URL is loaded
-	err = page.WaitForURL("https://www.bseindia.com/corporates/ann.html")
+	err = page.WaitForURL(TempForSaleUrl)
 
 	if err != nil {
 		log.Fatalf("could not wait for url: %v", err)
 	}
 
+	screenshot, err := page.Screenshot(playwright.PageScreenshotOptions{
+		Path: playwright.String("foo.png"),
+	})
+	screenshot = screenshot
+
+	if err != nil {
+		log.Fatalf("could not screenshot: %v", err)
+	}
+
+
+  sampleHeading, err := page.Locator("xpath=//html/body/div[2]/main/div[1]/div").AllTextContents()
+	if err != nil {
+		log.Fatalf("could not get entries: %v", err)
+	}
+
+	if len(sampleHeading) == 0 {
+		log.Fatalf("no entries found")
+	}
+	fmt.Printf("%v",sampleHeading)
 	return
 }
 
@@ -85,12 +107,16 @@ func InitializePlaywright() playwright.BrowserContext {
 
 	// Creating context out of the created browser
 	context, err := browser.NewContext(playwright.BrowserNewContextOptions{
-		UserAgent: playwright.String("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"), // Fake user agent
+		UserAgent: playwright.String("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36"), // Fake user agent
 		Viewport:  &playwright.Size{Width: 1920, Height: 1080},
 	})
 	if err != nil {
 		log.Fatalf("could not create context: %v", err)
 	}
+
+	fmt.Printf("\n\nwowwww\n\n\n")
+
+
 
 	return context
 
