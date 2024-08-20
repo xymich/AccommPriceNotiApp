@@ -69,8 +69,9 @@ func ExtractComponents(ctx playwright.BrowserContext) (data []DaftComponents) {
 		log.Fatalf("could not screenshot: %v", err)
 	}
 
-
-  sampleHeading, err := page.Locator("xpath=//html/body/div[2]/main/div[1]/div").AllTextContents()
+	listItem := 2
+	_xpath := fmt.Sprintf("xpath=//html/body/div[2]/main/div[3]/div[1]/ul/li[%v]", listItem)
+  sampleHeading, err := page.Locator(_xpath).AllTextContents()
 	if err != nil {
 		log.Fatalf("could not get entries: %v", err)
 	}
