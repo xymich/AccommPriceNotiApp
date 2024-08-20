@@ -1,0 +1,11 @@
+data entry formatting algorithm rules:
+
+Upon data taken, remove from slice
+
+BedCount: contains "bed"
+BathCount: contains "bath"
+Price: starts with "€" else contains "€" else "From"
+Address: contains "Co." else town name (need a list)
+PropertyType: only a couple can do switch case if matches (ie Semi-D, Terrace, Detatched, Apartment, and more) if not then nothing.
+Size: contains m² or other measurements
+Seller: take it last most likely first entry in array

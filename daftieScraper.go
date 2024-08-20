@@ -19,6 +19,7 @@ type DaftComponents struct {
 	Address			string	`json:"address"`
 	Price			string 	`json:"price"`
 	BedCount		string 	`json:"bed_count"`
+	BathCount		string 	`json:"bath_count"`
 	Size			string 	`json:"size"`
 	PropertyType	string 	`json:"property_type"`
 	Seller			string 	`json:"seller"`
@@ -68,8 +69,9 @@ func PageScrape(ctx playwright.BrowserContext) (data []DaftComponents) {
 	}
 
 	// screenshot, err := page.Screenshot(playwright.PageScreenshotOptions{
-	// 	Path: playwright.String("foo.png"),
+	// 	Path: playwright.String("helloworld.png"),
 	// })
+
 	if err != nil {
 		log.Fatalf("could not screenshot: %v", err)
 	}
@@ -99,10 +101,15 @@ func PageScrape(ctx playwright.BrowserContext) (data []DaftComponents) {
 
 	dataEntries = append(dataEntries, houseDataEntry)
 
+	for _,v:=range liInnerSplit{
+		fmt.Println(v)
+	}
+	
+	fmt.Print("\n\n)))(((**********************)))(((\n\n")
 	}
 
 	fmt.Print(dataEntries[0], "\n\n******************n\n")
-	
+
 	return dataEntries
 }
 
