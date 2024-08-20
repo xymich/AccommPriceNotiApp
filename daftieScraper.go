@@ -115,14 +115,15 @@ func PageScrape(ctx playwright.BrowserContext) (data []DaftComponents) {
 
 func createDataEntry(liInnerSplit []string) (dataEntry DaftComponents) {
 
-	dataEntry = DaftComponents{
-		liInnerSplit[0],
-		liInnerSplit[1],
-		liInnerSplit[2],
-		liInnerSplit[3],
-		liInnerSplit[4],
-		liInnerSplit[5],
-	}
+	// dataEntry = DaftComponents{
+	// 	liInnerSplit[0],
+	// 	liInnerSplit[1],
+	// 	liInnerSplit[2],
+	// 	liInnerSplit[3],
+	// 	liInnerSplit[4],
+	// 	liInnerSplit[5],
+	// 	liInnerSplit[6],
+	// }
 	
 	return dataEntry
 }
