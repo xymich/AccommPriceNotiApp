@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/playwright-community/playwright-go"
@@ -14,14 +15,13 @@ var TempForRentUrl = "https://www.daft.ie/property-for-rent/monaghan"
 var PlaywrightContext playwright.BrowserContext
 
 type DaftComponents struct {
-	AdvertLink		string 	`json:"advert_link"`
-	RentOrSale		string 	`json:"rent_or_sale"`
+	// AdvertLink		string 	`json:"advert_link"`
 	Address			string	`json:"address"`
-	PropertyType	string 	`json:"property_type"`
-	Title			string 	`json:"title"`
 	Price			string 	`json:"price"`
 	BedCount		string 	`json:"bed_count"`
-	Tag				string 	`json:"tag"`
+	Size			string 	`json:"size"`
+	PropertyType	string 	`json:"property_type"`
+	Seller			string 	`json:"seller"`
 	//PropertyImage	string `json:"property_image"` // ?? maybe
 }
 
@@ -39,7 +39,6 @@ func main() {
 
 	compArr := PageScrape(PlaywrightContext)
 	fmt.Print(compArr)
-
 
 	runtimes2 := time.Now()
 	fmt.Println(runtimes2.Sub(runtimes1).Seconds)
@@ -68,38 +67,57 @@ func PageScrape(ctx playwright.BrowserContext) (data []DaftComponents) {
 		log.Fatalf("could not wait for url: %v", err)
 	}
 
-	screenshot, err := page.Screenshot(playwright.PageScreenshotOptions{
-		Path: playwright.String("foo.png"),
-	})
-	screenshot = screenshot
-
+	// screenshot, err := page.Screenshot(playwright.PageScreenshotOptions{
+	// 	Path: playwright.String("foo.png"),
+	// })
 	if err != nil {
 		log.Fatalf("could not screenshot: %v", err)
 	}
 
-	//listItem := 2
-	//_xpath1 := fmt.Sprintf("xpath=//html/body/div[2]/main/div[3]/div[1]/ul/li[%v]", listItem)
-	_xpath := fmt.Sprintf("xpath=//html/body/div[2]/main/div[3]/div[1]/ul/li") //reformat as you wish
-  stuffs, err := page.Locator(_xpath).All()
+	lixPath := fmt.Sprintf("xpath=//html/body/div[2]/main/div[3]/div[1]/ul/li") //reformat as you wish
+	liLocators, err := page.Locator(lixPath).All()
 	if err != nil {
 		log.Fatalf("could not get entries: %v", err)
 	}
 
-	if len(stuffs) == 0 {
+	if len(liLocators) == 0 {
 		log.Fatalf("no entries found")
 	}
 
-	fmt.Printf("%v\n",stuffs)
+	dataEntries := []DaftComponents{}
 
-	for r:=0;r<len(stuffs)-1;r++ {
-	miniStuffs, err := stuffs[r].AllInnerTexts()
-	if err != nil {
-		log.Fatalf("could not get entries: %v", err)
-	}
-	fmt.Println(miniStuffs, "\n\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n\n")
+	for r:=0;r<len(liLocators)-1;r++ {
+		
+		liInnerTexts, err := liLocators[r].AllInnerTexts()
+		if err != nil {
+			log.Fatalf("could not get entries: %v", err)
+		}
+
+		liInnerSplit := strings.Split(liInnerTexts[0],"\n")
+
+		houseDataEntry := createDataEntry(liInnerSplit)
+
+	dataEntries = append(dataEntries, houseDataEntry)
+
 	}
 
-	return
+	fmt.Print(dataEntries[0], "\n\n******************n\n")
+	
+	return dataEntries
+}
+
+func createDataEntry(liInnerSplit []string) (dataEntry DaftComponents) {
+
+	dataEntry = DaftComponents{
+		liInnerSplit[0],
+		liInnerSplit[1],
+		liInnerSplit[2],
+		liInnerSplit[3],
+		liInnerSplit[4],
+		liInnerSplit[5],
+	}
+	
+	return dataEntry
 }
 
 func InitializePlaywright() playwright.BrowserContext {
