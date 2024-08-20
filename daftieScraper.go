@@ -3,22 +3,25 @@ package main
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/playwright-community/playwright-go"
 )
 
-var TempForSaleUrl = "https://www.daft.ie/property-for-sale/monaghan"
+// https://www.daft.ie/property-for-sale/XXXX?pageSize=20&from=0 // > can go to max on bottom
+var TempForSaleUrl = "https://www.daft.ie/property-for-sale/dundalk-louth"
 var TempForRentUrl = "https://www.daft.ie/property-for-rent/monaghan"
 var PlaywrightContext playwright.BrowserContext
 
 type DaftComponents struct {
-	AdvertLink   string `json:"advert_link"`
-	PaymentType  string `json:"payment_type"`
-	PropertyType string `json:"property_type"`
-	Title        string `json:"title"`
-	Price        string `json:"price"`
-	BedCount     string `json:"bed_count"`
-	Tag          string `json:"tag"`
+	AdvertLink		string 	`json:"advert_link"`
+	RentOrSale		string 	`json:"rent_or_sale"`
+	Address			string	`json:"address"`
+	PropertyType	string 	`json:"property_type"`
+	Title			string 	`json:"title"`
+	Price			string 	`json:"price"`
+	BedCount		string 	`json:"bed_count"`
+	Tag				string 	`json:"tag"`
 	//PropertyImage	string `json:"property_image"` // ?? maybe
 }
 
@@ -31,14 +34,19 @@ func main() {
 	//init
 	PlaywrightContext = InitializePlaywright()
 	//now we scrape!
+	runtimes1 := time.Now()
 
-	compArr := ExtractComponents(PlaywrightContext)
+
+	compArr := PageScrape(PlaywrightContext)
 	fmt.Print(compArr)
+
+
+	runtimes2 := time.Now()
+	fmt.Println(runtimes2.Sub(runtimes1).Seconds)
 	PlaywrightContext.Close()
 }
 
-func ExtractComponents(ctx playwright.BrowserContext) (data []DaftComponents) {
-
+func PageScrape(ctx playwright.BrowserContext) (data []DaftComponents) {
 	// Created a new page from the context we initialized
 	page, err := ctx.NewPage()
 
@@ -69,17 +77,28 @@ func ExtractComponents(ctx playwright.BrowserContext) (data []DaftComponents) {
 		log.Fatalf("could not screenshot: %v", err)
 	}
 
-	listItem := 2
-	_xpath := fmt.Sprintf("xpath=//html/body/div[2]/main/div[3]/div[1]/ul/li[%v]", listItem)
-  sampleHeading, err := page.Locator(_xpath).AllTextContents()
+	//listItem := 2
+	//_xpath1 := fmt.Sprintf("xpath=//html/body/div[2]/main/div[3]/div[1]/ul/li[%v]", listItem)
+	_xpath := fmt.Sprintf("xpath=//html/body/div[2]/main/div[3]/div[1]/ul/li") //reformat as you wish
+  stuffs, err := page.Locator(_xpath).All()
 	if err != nil {
 		log.Fatalf("could not get entries: %v", err)
 	}
 
-	if len(sampleHeading) == 0 {
+	if len(stuffs) == 0 {
 		log.Fatalf("no entries found")
 	}
-	fmt.Printf("%v",sampleHeading)
+
+	fmt.Printf("%v\n",stuffs)
+
+	for r:=0;r<len(stuffs)-1;r++ {
+	miniStuffs, err := stuffs[r].AllInnerTexts()
+	if err != nil {
+		log.Fatalf("could not get entries: %v", err)
+	}
+	fmt.Println(miniStuffs, "\n\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n\n")
+	}
+
 	return
 }
 
@@ -116,8 +135,6 @@ func InitializePlaywright() playwright.BrowserContext {
 	}
 
 	fmt.Printf("\n\nwowwww\n\n\n")
-
-
 
 	return context
 

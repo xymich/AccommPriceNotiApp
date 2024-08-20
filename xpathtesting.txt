@@ -1,0 +1,18 @@
+/html/body/div[2]/main/div[3]/div[1]/ul/li[1]
+[Monaghan Property SalesMonaghan Property SalesCrosses, Monaghan, Monaghan, Co. Monaghan, H18DH59€345,0004 Bed2 Bath247 m²BungalowViewing AdvisedADVANTAGE][]
+[Monaghan Property SalesMonaghan Property SalesCrosses, Monaghan, Monaghan, Co. Monaghan, H18DH59€345,0004 Bed2 Bath247 m²BungalowViewing AdvisedADVANTAGE][]
+
+/html/body/div[2]/main/div[3]/div[1]/ul/li[2]/a/div/div
+[Shane O'HanlonO'Hanlon PropertyLisdoonan, Carrickmacross, Laragh, Co. Monaghan, A81EH75€340,0004 Bed2 Bath100 m²DetachedEnergy EfficientADVANTAGE][]
+
+/html/body/div[2]/main/div[3]/div[1]/ul/li[3]/a/div/div
+[DNG John O' Brien OfficeDNG John O’BrienClossagh More, Rockcorry, Co. Monaghan, H18RD00€295,0004 Bed2 Bath145 m²DetachedSpacious GardenADVANTAGE][]
+
+/html/body/div[2]/main/div[3]/div[1]/ul/li[4]
+[Beattie Real EstateBeattie Real EstateClare Oghill, Castleblayney, Co. Monaghan, A75AP62€260,0002 Bed2 Bath67 m²DetachedRural LocationADVANTAGE][]
+
+
+---dundalk
+
+/html/body/div[2]/main/div[3]/div[1]/ul/li[1]
+[Dan Howard MIPAV TRV PSR 006328Dan Howard & Co. Ltd11 Douglas Street, Cork City, Co. Cork, T12HY22€490,0005 Bed3 Bath15 m²End of TerraceViewing AdvisedADVANTAGE][]
