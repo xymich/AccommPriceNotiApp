@@ -1,4 +1,4 @@
-package main
+package scraper
 
 import (
 	"fmt"
@@ -26,7 +26,7 @@ type DaftComponents struct {
 	//PropertyImage	string `json:"property_image"` // ?? maybe
 }
 
-func main() {
+func Scrape() {
 	// extra check specifically for server use
 	err := playwright.Install()
 	if err != nil {
@@ -38,7 +38,7 @@ func main() {
 	runtimes1 := time.Now()
 
 
-	compArr := PageScrape(PlaywrightContext)
+	compArr := pageScrape(PlaywrightContext)
 	fmt.Print(compArr)
 
 	runtimes2 := time.Now()
@@ -46,7 +46,7 @@ func main() {
 	PlaywrightContext.Close()
 }
 
-func PageScrape(ctx playwright.BrowserContext) (data []DaftComponents) {
+func pageScrape(ctx playwright.BrowserContext) (data []DaftComponents) {
 	// Created a new page from the context we initialized
 	page, err := ctx.NewPage()
 
