@@ -1,11 +1,10 @@
 package main
 
 import (
-	"github.com/ilyTea/AccommPriceNotiApp/server"
+	"github.com/ilyTea/AccommPriceNotiApp/scraper"
 )
 
-
-
 func main(){
-  server.Start()
+	scraper.Scrape("monaghan")
+  	//server.Start()
 }

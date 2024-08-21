@@ -3,19 +3,21 @@ package scraper
 import (
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
-	"time"
 
 	"github.com/playwright-community/playwright-go"
 )
 
-// https://www.daft.ie/property-for-sale/XXXX?pageSize=20&from=0 // > can go to max on bottom
-var TempForSaleUrl = "https://www.daft.ie/property-for-sale/dundalk-louth"
-var TempForRentUrl = "https://www.daft.ie/property-for-rent/monaghan"
+const urlPre string = "https://www.daft.ie/property-for-sale/"
+const urlExt string = "?pageSize=20&from="
+var location string = ""
+
+//@@// testPageUrl = urlPre + location + urlExt + (listCount+=20) ie. https://www.daft.ie/property-for-sale/dundalk-louth?pageSize=20&from=0
+
 var PlaywrightContext playwright.BrowserContext
 
 type DaftComponents struct {
-	// AdvertLink		string 	`json:"advert_link"`
 	Address			string	`json:"address"`
 	Price			string 	`json:"price"`
 	BedCount		string 	`json:"bed_count"`
@@ -23,31 +25,42 @@ type DaftComponents struct {
 	Size			string 	`json:"size"`
 	PropertyType	string 	`json:"property_type"`
 	Seller			string 	`json:"seller"`
-	//PropertyImage	string `json:"property_image"` // ?? maybe
+	//AdvertLink	string 	`json:"advert_link"` // ?? maybe
+	//PropertyImage	string 	`json:"property_image"` // ?? maybe
 }
 
-func Scrape() {
-	// extra check specifically for server use
+func Scrape(location string) {
+	// extra check specifically for server use (might be needed just incase but also might be worth removing if works without to increase speed)
 	err := playwright.Install()
 	if err != nil {
 		log.Fatalf("could not install playwright: %v", err)
 	}
-	//init
 	PlaywrightContext = InitializePlaywright()
+
 	//now we scrape!
-	runtimes1 := time.Now()
+	goNextPage := true
+	scrapeUrl := ""
+	listCount := 0
+	
+	for (goNextPage == true) {
+		goNextPage = false
+		fmt.Println("making url")
+		scrapeUrl = fmt.Sprintf(urlPre + location + urlExt + strconv.Itoa(listCount))
+		fmt.Println("url:", scrapeUrl)
+		compArr, goNextPage := pageScrape(scrapeUrl, PlaywrightContext)
+	
+		listCount += 20
 
-
-	compArr := pageScrape(PlaywrightContext)
-	fmt.Print(compArr)
-
-	runtimes2 := time.Now()
-	fmt.Println(runtimes2.Sub(runtimes1).Seconds)
+		compArr = compArr
+		fmt.Println("go next page? :", goNextPage, "|| listcount :", listCount)
+	}
+	
 	PlaywrightContext.Close()
 }
 
-func pageScrape(ctx playwright.BrowserContext) (data []DaftComponents) {
+func pageScrape(url string, ctx playwright.BrowserContext) (data []DaftComponents, goNextPage bool ) {
 	// Created a new page from the context we initialized
+	goNextPage = false
 	page, err := ctx.NewPage()
 
 	if err != nil {
@@ -55,22 +68,22 @@ func pageScrape(ctx playwright.BrowserContext) (data []DaftComponents) {
 	}
 
 	// Navigates to the Corporate Announcements Page
-	if _, err = page.Goto(TempForSaleUrl, playwright.PageGotoOptions{
+	if _, err = page.Goto(url, playwright.PageGotoOptions{
 		WaitUntil: playwright.WaitUntilStateNetworkidle,
 	}); err != nil {
 		log.Fatalf("could not goto: %v", err)
 	}
 
 	// Waits until the full URL is loaded
-	err = page.WaitForURL(TempForSaleUrl)
-
-	if err != nil {
-		log.Fatalf("could not wait for url: %v", err)
-	}
+	err = page.WaitForURL(url)
 
 	// screenshot, err := page.Screenshot(playwright.PageScreenshotOptions{
 	// 	Path: playwright.String("helloworld.png"),
 	// })
+
+	if err != nil {
+		log.Fatalf("could not wait for url: %v", err)
+	}
 
 	if err != nil {
 		log.Fatalf("could not screenshot: %v", err)
@@ -105,12 +118,29 @@ func pageScrape(ctx playwright.BrowserContext) (data []DaftComponents) {
 		fmt.Println(v)
 	}
 	
-	fmt.Print("\n\n)))(((**********************)))(((\n\n")
+	fmt.Print("\n)))(((**********************)))(((\n\n")
+	}
+	
+	paginationTextArray, err := page.Locator("xpath=//html/body/div[2]/main/div[3]/div[1]/div[2]/p").AllInnerTexts()
+	splitPaginationText := strings.Split(paginationTextArray[0], " ")
+	currentListCount,err := strconv.Atoi(splitPaginationText[len(splitPaginationText)-3])
+	if err != nil {
+		log.Fatalf("Could not get current list count: %v", err)
 	}
 
-	fmt.Print(dataEntries[0], "\n\n******************n\n")
+	totalListCount,err := strconv.Atoi(splitPaginationText[len(splitPaginationText)-1])
+	if err != nil {
+		log.Fatalf("Could not get total list count: %v", err)
+	}
 
-	return dataEntries
+	fmt.Println("CURRENT LIST COUNT ",currentListCount)
+	fmt.Println("TOTAL LIST COUNT ",totalListCount)
+
+	if (totalListCount > currentListCount) {
+		goNextPage = true;
+	}
+
+	return dataEntries, goNextPage
 }
 
 func createDataEntry(liInnerSplit []string) (dataEntry DaftComponents) {
