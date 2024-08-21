@@ -9,7 +9,7 @@ import (
 	"github.com/playwright-community/playwright-go"
 )
 
-const urlPre string = "https://www.daft.ie/property-for-sale/"
+const urlPre string = "https://www.daft.ie/property-for-rent/"
 const urlExt string = "?pageSize=20&from="
 var location string = ""
 
@@ -123,12 +123,12 @@ func pageScrape(url string, ctx playwright.BrowserContext) (data []DaftComponent
 	
 	paginationTextArray, err := page.Locator("xpath=//html/body/div[2]/main/div[3]/div[1]/div[2]/p").AllInnerTexts()
 	splitPaginationText := strings.Split(paginationTextArray[0], " ")
-	currentListCount,err := strconv.Atoi(splitPaginationText[len(splitPaginationText)-3])
+	currentListCount,err := strconv.Atoi(strings.Replace(splitPaginationText[len(splitPaginationText)-3], ",", "", -1))
 	if err != nil {
 		log.Fatalf("Could not get current list count: %v", err)
 	}
 
-	totalListCount,err := strconv.Atoi(splitPaginationText[len(splitPaginationText)-1])
+	totalListCount,err := strconv.Atoi(strings.Replace(splitPaginationText[len(splitPaginationText)-1], ",", "", -1))
 	if err != nil {
 		log.Fatalf("Could not get total list count: %v", err)
 	}
