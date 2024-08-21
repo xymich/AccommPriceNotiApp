@@ -38,21 +38,21 @@ func Scrape(location string) {
 	PlaywrightContext = InitializePlaywright()
 
 	//now we scrape!
-	goNextPage := true
 	scrapeUrl := ""
 	listCount := 0
-	
-	for (goNextPage == true) {
-		goNextPage = false
-		fmt.Println("making url")
+
+	for {
+		goNextPage := false
 		scrapeUrl = fmt.Sprintf(urlPre + location + urlExt + strconv.Itoa(listCount))
-		fmt.Println("url:", scrapeUrl)
 		compArr, goNextPage := pageScrape(scrapeUrl, PlaywrightContext)
-	
+
 		listCount += 20
 
 		compArr = compArr
-		fmt.Println("go next page? :", goNextPage, "|| listcount :", listCount)
+		fmt.Println("go next page? :", goNextPage, "|| listcount :", listCount,"\n\n >>>>>><<<<<<")
+		if (goNextPage == false) {
+			break
+		}
 	}
 	
 	PlaywrightContext.Close()
@@ -118,7 +118,7 @@ func pageScrape(url string, ctx playwright.BrowserContext) (data []DaftComponent
 		fmt.Println(v)
 	}
 	
-	fmt.Print("\n)))(((**********************)))(((\n\n")
+	fmt.Print("\n]][[###**********^v^**********###]][[\n\n")
 	}
 	
 	paginationTextArray, err := page.Locator("xpath=//html/body/div[2]/main/div[3]/div[1]/div[2]/p").AllInnerTexts()
