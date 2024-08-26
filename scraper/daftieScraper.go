@@ -5,6 +5,8 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/playwright-community/playwright-go"
 )
@@ -40,29 +42,47 @@ func Scrape(location string) {
 	//now we scrape!
 	scrapeUrl := ""
 	listCount := 0
+	scrapeUrl = fmt.Sprintf(urlPre + location + urlExt + strconv.Itoa(listCount))
+	compArr, _, totalListing := pageScrape(scrapeUrl, PlaywrightContext)
 
-	for {
-		goNextPage := false
-		scrapeUrl = fmt.Sprintf(urlPre + location + urlExt + strconv.Itoa(listCount))
-		compArr, currentPage, totalPage := pageScrape(scrapeUrl, PlaywrightContext)
+	pageCount:= totalListing/20;
 
-
-
-		
-		listCount += 20
-
-		compArr = compArr
-
-		if (totalPage > currentPage) {
-			goNextPage = true;
-		}
-
-		fmt.Println("go next page? :", goNextPage, "|| listcount :", listCount,"\n\n >>>>>><<<<<<")
-		if (goNextPage == false) {
-			break
-		}
-	}
+	dataChan := make(chan []DaftComponents)
 	
+	pageScrapeRoutine := func(url string, wg *sync.WaitGroup) {
+		fmt.Println("time before context",time.Now())
+		defer wg.Done()
+		var pctx playwright.BrowserContext
+		pctx = InitializePlaywright()
+		fmt.Println("time after context before scrape",time.Now())
+		scrapedSlice, _, _ := pageScrape(url, pctx)
+		dataChan <- scrapedSlice
+		fmt.Println("time after scrape",time.Now())
+	}
+
+	if (pageCount > 1) {
+		go func() {
+			wg := sync.WaitGroup{}
+			for i := 0; i <= pageCount; i++{
+				wg.Add(1)
+				listCount += 20
+				scrapeUrl = fmt.Sprintf(urlPre + location + urlExt + strconv.Itoa(listCount))
+				
+				go pageScrapeRoutine(scrapeUrl, &wg)
+			}
+			wg.Wait()
+			close(dataChan)
+		}()
+	fmt.Println(len(dataChan))
+	  for n:= range dataChan {
+		array := n;
+		for _, v := range array {
+			compArr = append(compArr, v)
+		}
+	  }
+	}
+	compArr = compArr
+	fmt.Println("final listcount :", listCount,"\n\n >>>>>><<<<<<")
 	PlaywrightContext.Close()
 }
 
@@ -108,6 +128,8 @@ func pageScrape(url string, ctx playwright.BrowserContext) (data []DaftComponent
 
 	dataEntries := []DaftComponents{}
 
+	fmt.Println(len(liLocators))
+
 	for r:=0;r<len(liLocators)-1;r++ {
 		
 		liInnerTexts, err := liLocators[r].AllInnerTexts()
@@ -119,13 +141,8 @@ func pageScrape(url string, ctx playwright.BrowserContext) (data []DaftComponent
 
 		houseDataEntry := createDataEntry(liInnerSplit)
 
-	dataEntries = append(dataEntries, houseDataEntry)
+		dataEntries = append(dataEntries, houseDataEntry)
 
-	for _,v:=range liInnerSplit{
-		fmt.Println(v)
-	}
-	
-	fmt.Print("\n]][[###**********^v^**********###]][[\n\n")
 	}
 	
 	paginationTextArray, err := page.Locator("xpath=//html/body/div[2]/main/div[3]/div[1]/div[2]/p").AllInnerTexts()
