@@ -5,6 +5,6 @@ import (
 )
 
 func main(){
-	scraper.Scrape("dublin")
+	scraper.Scrape("monaghan")
   	//server.Start()
 }

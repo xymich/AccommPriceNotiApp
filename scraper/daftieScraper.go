@@ -44,11 +44,19 @@ func Scrape(location string) {
 	for {
 		goNextPage := false
 		scrapeUrl = fmt.Sprintf(urlPre + location + urlExt + strconv.Itoa(listCount))
-		compArr, goNextPage := pageScrape(scrapeUrl, PlaywrightContext)
+		compArr, currentPage, totalPage := pageScrape(scrapeUrl, PlaywrightContext)
 
+
+
+		
 		listCount += 20
 
 		compArr = compArr
+
+		if (totalPage > currentPage) {
+			goNextPage = true;
+		}
+
 		fmt.Println("go next page? :", goNextPage, "|| listcount :", listCount,"\n\n >>>>>><<<<<<")
 		if (goNextPage == false) {
 			break
@@ -58,9 +66,8 @@ func Scrape(location string) {
 	PlaywrightContext.Close()
 }
 
-func pageScrape(url string, ctx playwright.BrowserContext) (data []DaftComponents, goNextPage bool ) {
+func pageScrape(url string, ctx playwright.BrowserContext) (data []DaftComponents, currentPageCount int, totalPageCount int ) {
 	// Created a new page from the context we initialized
-	goNextPage = false
 	page, err := ctx.NewPage()
 
 	if err != nil {
@@ -123,12 +130,12 @@ func pageScrape(url string, ctx playwright.BrowserContext) (data []DaftComponent
 	
 	paginationTextArray, err := page.Locator("xpath=//html/body/div[2]/main/div[3]/div[1]/div[2]/p").AllInnerTexts()
 	splitPaginationText := strings.Split(paginationTextArray[0], " ")
-	currentListCount,err := strconv.Atoi(strings.Replace(splitPaginationText[len(splitPaginationText)-3], ",", "", -1))
+	currentListCount, err := strconv.Atoi(strings.Replace(splitPaginationText[len(splitPaginationText)-3], ",", "", -1))
 	if err != nil {
 		log.Fatalf("Could not get current list count: %v", err)
 	}
 
-	totalListCount,err := strconv.Atoi(strings.Replace(splitPaginationText[len(splitPaginationText)-1], ",", "", -1))
+	totalListCount, err := strconv.Atoi(strings.Replace(splitPaginationText[len(splitPaginationText)-1], ",", "", -1))
 	if err != nil {
 		log.Fatalf("Could not get total list count: %v", err)
 	}
@@ -136,11 +143,7 @@ func pageScrape(url string, ctx playwright.BrowserContext) (data []DaftComponent
 	fmt.Println("CURRENT LIST COUNT ",currentListCount)
 	fmt.Println("TOTAL LIST COUNT ",totalListCount)
 
-	if (totalListCount > currentListCount) {
-		goNextPage = true;
-	}
-
-	return dataEntries, goNextPage
+	return dataEntries, currentListCount, totalListCount
 }
 
 func createDataEntry(liInnerSplit []string) (dataEntry DaftComponents) {
