@@ -104,9 +104,10 @@ func pageScrape(url string, ctx playwright.BrowserContext) (data []DaftComponent
 	// Waits until the full URL is loaded
 	err = page.WaitForURL(url)
 
-	// screenshot, err := page.Screenshot(playwright.PageScreenshotOptions{
-	// 	Path: playwright.String("helloworld.png"),
-	// })
+	screenshot, err := page.Screenshot(playwright.PageScreenshotOptions{
+		Path: playwright.String("helloworld.png"),
+	})
+	screenshot = screenshot
 
 	if err != nil {
 		log.Fatalf("could not wait for url: %v", err)
@@ -174,7 +175,7 @@ func createDataEntry(liInnerSplit []string) (dataEntry DaftComponents) {
 	// 	liInnerSplit[5],
 	// 	liInnerSplit[6],
 	// }
-	
+	fmt.Println(liInnerSplit, "\n\n****************************************\n\n")
 	return dataEntry
 }
 
