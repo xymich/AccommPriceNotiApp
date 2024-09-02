@@ -52,13 +52,13 @@ func Scrape() {
 	}
 
 	if (pageCount > 1) {
-		numOfRoutines := 8
+		numOfRoutines := 5
 		pageRemainder := pageCount % numOfRoutines
 		pagesPerRoutine := (pageCount - pageRemainder) / numOfRoutines
 		initPage := 1
 		limitPage := pagesPerRoutine
 		
-		var limits [8][2]int
+		var limits [5][2]int 
 		for i := 0; i < numOfRoutines; i++ {
 			limits[i][0] = initPage
 			limits[i][1] = limitPage
@@ -107,11 +107,20 @@ func pageScrape(url string, ctx playwright.BrowserContext) (data []DaftComponent
 	}
 
 	// Navigates to the Corporate Announcements Page
-	if _, err = page.Goto(url, playwright.PageGotoOptions{
-		WaitUntil: playwright.WaitUntilStateNetworkidle,
-	}); err != nil {
-		log.Fatalf("could not goto: %v", err)
+	errorreolwa2235 := true
+	errCount := 0
+	for errorreolwa2235 {
+		if _, err = page.Goto(url, playwright.PageGotoOptions{
+			WaitUntil: playwright.WaitUntilStateNetworkidle,}); 
+		err != nil {
+			errCount++
+			fmt.Println(err, "... Retrying", errCount)
+			time.Sleep(2 * time.Second)
+		} else {
+			errorreolwa2235 = false
+		}
 	}
+	
 
 	// Waits until the full URL is loaded
 	err = page.WaitForURL(url)
