@@ -3,6 +3,7 @@ package scraper
 import (
 	"fmt"
 	"log"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -79,10 +80,10 @@ func Scrape() {
 		log.Fatalf("could not install playwright: %v", err)
 	}
 	PlaywrightContext = InitializePlaywright()
+	defer PlaywrightContext.Close()
 
 	//now we scrape!
 	scrapeUrl := fmt.Sprintf("https://www.daft.ie/property-for-%v/ireland", propertyType)
-	listCount := 0
 	compArr, totalListing := pageScrape(scrapeUrl, PlaywrightContext)
 	fmt.Println("scrapeurl = ", scrapeUrl)
 	pageCount:= totalListing/20;
@@ -126,8 +127,8 @@ func Scrape() {
 		allData = append(allData, n...) 
 	  }
 	}
-	fmt.Println("final listcount :", listCount,"\n\n >>>>>><<<<<<")
-	PlaywrightContext.Close()
+
+	writeDataFile(allData)
 }
 
 func pageScrapeIncrement(ctx playwright.BrowserContext,initial int, limit int) (data [][]DaftComponents ) {
@@ -200,7 +201,7 @@ func pageScrape(url string, ctx playwright.BrowserContext) (data []DaftComponent
 
 	fmt.Println(len(liLocators))
 
-	for r:=0;r<len(liLocators)-1;r++ {
+	for r := 0; r < len(liLocators) - 1; r++ {
 		
 		liInnerTexts, err := liLocators[r].AllInnerTexts()
 		if err != nil {
@@ -218,7 +219,7 @@ func pageScrape(url string, ctx playwright.BrowserContext) (data []DaftComponent
 	paginationTextArray, _ := page.Locator("xpath=//html/body/div[2]/main/div[3]/div[1]/div[2]/p").AllInnerTexts()
 	splitPaginationText := strings.Split(paginationTextArray[0], " ")
 
-	totalListCount, err := strconv.Atoi(strings.Replace(splitPaginationText[len(splitPaginationText)-1], ",", "", -1))
+	totalListCount, err := strconv.Atoi(strings.Replace(splitPaginationText[len(splitPaginationText) - 1], ",", "", - 1))
 	if err != nil {
 		log.Fatalf("Could not get total list count: %v", err)
 	}
@@ -243,7 +244,6 @@ func createDataEntry(liInnerSplit []string) (dataEntry DaftComponents) {
 	var containsList = func(r int, toFind string) bool {
 		 return strings.Contains(liInnerSplit[r], toFind) 
 	}
-	
 
 	re := regexp.MustCompile(`[0-9,]+(?:\.[0-9]+)?`) // for finding numbers with comma only
 	
@@ -265,7 +265,6 @@ func createDataEntry(liInnerSplit []string) (dataEntry DaftComponents) {
 				break
 			}
 		}
-				
 	}
 	for i := 0; i < len(liInnerSplit); i++ {
 		if (containsList(i, "€") || containsList(i, "From")) {
@@ -309,8 +308,23 @@ func removeElement(slice []string, i int) []string {
 	slice[i] = slice[len(slice) - 1]
 	return slice[:len(slice) - 1]
 }
-func writeDataFile(data []string) {
-
+func writeDataFile(data [][]DaftComponents) {
+	file, err := os.Create("output.txt")
+    if err != nil {
+        panic(err)
+    }
+	defer func() {
+        if err := file.Close(); err != nil {
+            panic(err)
+        }
+    }()
+	for i := 0; i < len(data); i++ {
+		for r := 0; r < len(data[i]); r++ {
+			d := data[i][r]
+			_, err = file.WriteString(fmt.Sprintf("\n\nAddy: %v, County: %v, Price: €%v, Beds: %v, Baths: %v, Type: %v, Seella: %v",
+			 									d.Address, d.County, d.Price, d.BedCount, d.BathCount, d.PropertyType, d.Seller))
+		}
+	}
 }
 
 func InitializePlaywright() playwright.BrowserContext {
