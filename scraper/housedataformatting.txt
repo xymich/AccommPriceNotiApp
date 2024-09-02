@@ -2,10 +2,27 @@ data entry formatting algorithm rules:
 
 Upon data taken, remove from slice
 
+Address: contains "Co." else town name (need a list)
+County: Co. / in list
 BedCount: contains "bed"
 BathCount: contains "bath"
-Price: starts with "€" else contains "€" else "From"
-Address: contains "Co." else town name (need a list)
-PropertyType: only a couple can do switch case if matches (ie Semi-D, Terrace, Detatched, Apartment, and more) if not then nothing.
-Size: contains m² or other measurements
+Price: starts with "€" else contains "€" else
+PropertyType: only a couple can do switch case if matches (ie Detatched, Semi-D, Terrace, End of Terrace, Townhouse, Apartment, Studio, Duplex, Bungalow, Site) if not then nothing.
 Seller: take it last most likely first entry in array
+Size: contains "m²" or "ac" or other measurements
+
+	Address			string	`json:"address"`
+	County			string	`json:"address"`
+	Price			string 	`json:"price"`
+	BedCount		string 	`json:"bed_count"`
+	BathCount		string 	`json:"bath_count"`
+	PropertyType	string 	`json:"property_type"`
+	Seller			string 	`json:"seller"`
+
+    var address string
+	var county string
+    var price string
+	var bedCount string
+	var bathCount string
+	var propType string
+	var seller string

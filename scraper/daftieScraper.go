@@ -3,6 +3,7 @@ package scraper
 import (
 	"fmt"
 	"log"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -13,13 +14,58 @@ import (
 
 var propertyType string = "rent"
 var PlaywrightContext playwright.BrowserContext
+var counties = map[string]bool {
+	"Cork":true, 
+	"Galway":true, 
+	"Mayo":true, 
+	"Donegal":true, 
+	"Kerry":true,
+	"Tipperary":true,
+	"Clare":true,
+	"Tyrone":true,
+	"Antrim":true,
+	"Limerick":true,
+	"Roscommon":true,
+	"Down":true,
+	"Wexford":true,
+	"Meath":true,
+	"Derry":true,
+	"Kilkenny":true,
+	"Wicklow":true,
+	"Offaly":true,
+	"Cavan":true,
+	"Waterford":true,
+	"Westmeath":true,
+	"Sligo":true,
+	"Laois":true,
+	"Kildare":true,
+	"Fermanagh":true,
+	"Leitrim":true,
+	"Armagh":true,
+	"Monaghan":true,
+	"Longford":true,
+	"Dublin":true,
+	"Carlow":true,
+	"Louth":true} 
+var houseTypes = map[string]bool {
+	"Detatched":true, 
+	"Semi-D":true, 
+	"Terrace":true, 
+	"End of Terrace":true, 
+	"Townhouse":true, 
+	"Apartment":true, 
+	"Studio":true, 
+	"Duplex":true, 
+	"Bungalow":true, 
+	"Site":true,
+	"House":true}
 
 type DaftComponents struct {
 	Address			string	`json:"address"`
+	County			string	`json:"address"`
 	Price			string 	`json:"price"`
 	BedCount		string 	`json:"bed_count"`
 	BathCount		string 	`json:"bath_count"`
-	Size			string 	`json:"size"`
 	PropertyType	string 	`json:"property_type"`
 	Seller			string 	`json:"seller"`
 	//AdvertLink	string 	`json:"advert_link"` // ?? maybe
@@ -182,17 +228,89 @@ func pageScrape(url string, ctx playwright.BrowserContext) (data []DaftComponent
 
 func createDataEntry(liInnerSplit []string) (dataEntry DaftComponents) {
 
-	// dataEntry = DaftComponents{
-	// 	liInnerSplit[0],
-	// 	liInnerSplit[1],
-	// 	liInnerSplit[2],
-	// 	liInnerSplit[3],
-	// 	liInnerSplit[4],
-	// 	liInnerSplit[5],
-	// 	liInnerSplit[6],
-	// }
 	fmt.Println(liInnerSplit, "\n\n****************************************\n")
+
+	var containsListMap = func(item string, itemsListMap map[string]bool ) (contains bool, returnItem string) {
+		normalizedItem := strings.ToLower(item)
+		for returnItem := range itemsListMap {
+			if strings.Contains(normalizedItem,strings.ToLower(returnItem)){
+				return true, returnItem
+			}
+		}
+		return false, ""
+	}
+
+	var containsList = func(r int, toFind string) bool {
+		 return strings.Contains(liInnerSplit[r], toFind) 
+	}
+	
+
+	re := regexp.MustCompile(`[0-9,]+(?:\.[0-9]+)?`) // for finding numbers with comma only
+	
+	var address string
+	var county string
+	var bedCount string
+	var bathCount string
+	var price string
+	var propType string
+	var seller string
+
+	for i := 0; i < len(liInnerSplit); i++ {
+		if (containsList(i, ",")) {
+			found, countyReturned := containsListMap(liInnerSplit[i], counties)
+			if found {
+				address = liInnerSplit[i]
+				county = countyReturned
+				liInnerSplit = removeElement(liInnerSplit, i)
+				break
+			}
+		}
+				
+	}
+	for i := 0; i < len(liInnerSplit); i++ {
+		if (containsList(i, "€") || containsList(i, "From")) {
+			match := re.FindString(liInnerSplit[i])
+			price = strings.ReplaceAll(match, ",", "")
+			liInnerSplit = removeElement(liInnerSplit, i)
+			break
+		}
+	}
+
+	for i := 0; i < len(liInnerSplit); i++ {
+		if (containsList(i, "Bed")) {
+			bedCount = strings.Split(liInnerSplit[i], " ")[0]
+			liInnerSplit = removeElement(liInnerSplit, i)
+			break
+		}
+	}
+
+	for i := 0; i < len(liInnerSplit); i++ {
+		if (containsList(i, "Bath")) {
+			bathCount = strings.Split(liInnerSplit[i], " ")[0]
+			liInnerSplit = removeElement(liInnerSplit, i)
+			break
+		}
+	}
+	for i := 0; i < len(liInnerSplit); i++ {
+		found, itemReturned := containsListMap(liInnerSplit[i], houseTypes)
+		if found {
+			propType = itemReturned
+			liInnerSplit = removeElement(liInnerSplit,i)
+			break
+		}
+	}	
+	seller = liInnerSplit[0];
+
+	dataEntry = DaftComponents{Address: address, County: county, Price: price, BedCount: bedCount, BathCount: bathCount, PropertyType: propType, Seller: seller} 
+	fmt.Println(dataEntry, "\n\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^n")
 	return dataEntry
+}
+func removeElement(slice []string, i int) []string {
+	slice[i] = slice[len(slice) - 1]
+	return slice[:len(slice) - 1]
+}
+func writeDataFile(data []string) {
+
 }
 
 func InitializePlaywright() playwright.BrowserContext {
@@ -227,7 +345,7 @@ func InitializePlaywright() playwright.BrowserContext {
 		log.Fatalf("could not create context: %v", err)
 	}
 
-	fmt.Printf("\n\nwowwww\n\n\n")
+	fmt.Printf("\n\nwowwww\n\n")
 
 	return context
 
