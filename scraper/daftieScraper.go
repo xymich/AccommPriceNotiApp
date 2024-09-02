@@ -11,12 +11,7 @@ import (
 	"github.com/playwright-community/playwright-go"
 )
 
-const urlPre string = "https://www.daft.ie/property-for-rent/"
-const urlExt string = "?pageSize=20&from="
-var location string = ""
-
-//@@// testPageUrl = urlPre + location + urlExt + (listCount+=20) ie. https://www.daft.ie/property-for-sale/dundalk-louth?pageSize=20&from=0
-
+var propertyType string = "rent"
 var PlaywrightContext playwright.BrowserContext
 
 type DaftComponents struct {
@@ -31,7 +26,7 @@ type DaftComponents struct {
 	//PropertyImage	string 	`json:"property_image"` // ?? maybe
 }
 
-func Scrape(location string) {
+func Scrape() {
 	// extra check specifically for server use (might be needed just incase but also might be worth removing if works without to increase speed)
 	err := playwright.Install()
 	if err != nil {
@@ -40,53 +35,70 @@ func Scrape(location string) {
 	PlaywrightContext = InitializePlaywright()
 
 	//now we scrape!
-	scrapeUrl := ""
+	scrapeUrl := fmt.Sprintf("https://www.daft.ie/property-for-%v/ireland", propertyType)
 	listCount := 0
-	scrapeUrl = fmt.Sprintf(urlPre + location + urlExt + strconv.Itoa(listCount))
-	compArr, _, totalListing := pageScrape(scrapeUrl, PlaywrightContext)
-
+	compArr, totalListing := pageScrape(scrapeUrl, PlaywrightContext)
+	fmt.Println("scrapeurl = ", scrapeUrl)
 	pageCount:= totalListing/20;
-
-	dataChan := make(chan []DaftComponents)
+	allData := [][]DaftComponents{compArr}
+	dataChan := make(chan [][]DaftComponents)
 	
-	pageScrapeRoutine := func(url string, wg *sync.WaitGroup) {
+	pageScrapeRoutine := func( init int, limit int, wg *sync.WaitGroup) {
 		fmt.Println("time before context",time.Now())
 		defer wg.Done()
-		var pctx playwright.BrowserContext
-		pctx = InitializePlaywright()
-		fmt.Println("time after context before scrape",time.Now())
-		scrapedSlice, _, _ := pageScrape(url, pctx)
-		dataChan <- scrapedSlice
-		fmt.Println("time after scrape",time.Now())
+		var pctx = InitializePlaywright()
+		scrapedGroupData := pageScrapeIncrement(pctx, init, limit)
+		dataChan <- scrapedGroupData
 	}
 
 	if (pageCount > 1) {
+		numOfRoutines := 8
+		pageRemainder := pageCount % numOfRoutines
+		pagesPerRoutine := (pageCount - pageRemainder) / numOfRoutines
+		initPage := 1
+		limitPage := pagesPerRoutine
+		
+		var limits [8][2]int
+		for i := 0; i < numOfRoutines; i++ {
+			limits[i][0] = initPage
+			limits[i][1] = limitPage
+			initPage += pagesPerRoutine
+			limitPage += pagesPerRoutine
+		}
+		fmt.Println("limits arr ",limits)
 		go func() {
 			wg := sync.WaitGroup{}
-			for i := 0; i <= pageCount; i++{
+			for i := 0; i < numOfRoutines; i++ {
 				wg.Add(1)
-				listCount += 20
-				scrapeUrl = fmt.Sprintf(urlPre + location + urlExt + strconv.Itoa(listCount))
-				
-				go pageScrapeRoutine(scrapeUrl, &wg)
+				go pageScrapeRoutine(limits[i][0], limits[i][1], &wg)
 			}
 			wg.Wait()
 			close(dataChan)
 		}()
 	fmt.Println(len(dataChan))
 	  for n:= range dataChan {
-		array := n;
-		for _, v := range array {
-			compArr = append(compArr, v)
-		}
+		allData = append(allData, n...) 
 	  }
 	}
-	compArr = compArr
 	fmt.Println("final listcount :", listCount,"\n\n >>>>>><<<<<<")
 	PlaywrightContext.Close()
 }
 
-func pageScrape(url string, ctx playwright.BrowserContext) (data []DaftComponents, currentPageCount int, totalPageCount int ) {
+func pageScrapeIncrement(ctx playwright.BrowserContext,initial int, limit int) (data [][]DaftComponents ) {
+	// https://www.daft.ie/property-for-rent/ireland?from=20&pageSize=20
+	groupedData := [][]DaftComponents{}
+
+	for initial < limit {
+		initial += 1
+		url := fmt.Sprintf("https://www.daft.ie/property-for-rent/ireland?from=%v&pageSize=20",initial*20)
+		daftComponents, _ := pageScrape(url, ctx)
+		groupedData = append(groupedData,daftComponents)
+	}
+
+	return groupedData
+}
+
+func pageScrape(url string, ctx playwright.BrowserContext) (data []DaftComponents, totalPageCount int ) {
 	// Created a new page from the context we initialized
 	page, err := ctx.NewPage()
 
@@ -103,7 +115,9 @@ func pageScrape(url string, ctx playwright.BrowserContext) (data []DaftComponent
 
 	// Waits until the full URL is loaded
 	err = page.WaitForURL(url)
-
+	if (err != nil) {
+		fmt.Println(err)
+	}
 	screenshot, err := page.Screenshot(playwright.PageScreenshotOptions{
 		Path: playwright.String("helloworld.png"),
 	})
@@ -117,7 +131,7 @@ func pageScrape(url string, ctx playwright.BrowserContext) (data []DaftComponent
 		log.Fatalf("could not screenshot: %v", err)
 	}
 
-	lixPath := fmt.Sprintf("xpath=//html/body/div[2]/main/div[3]/div[1]/ul/li") //reformat as you wish
+	lixPath := "xpath=//html/body/div[2]/main/div[3]/div[1]/ul/li" //reformat as you wish
 	liLocators, err := page.Locator(lixPath).All()
 	if err != nil {
 		log.Fatalf("could not get entries: %v", err)
@@ -146,22 +160,15 @@ func pageScrape(url string, ctx playwright.BrowserContext) (data []DaftComponent
 
 	}
 	
-	paginationTextArray, err := page.Locator("xpath=//html/body/div[2]/main/div[3]/div[1]/div[2]/p").AllInnerTexts()
+	paginationTextArray, _ := page.Locator("xpath=//html/body/div[2]/main/div[3]/div[1]/div[2]/p").AllInnerTexts()
 	splitPaginationText := strings.Split(paginationTextArray[0], " ")
-	currentListCount, err := strconv.Atoi(strings.Replace(splitPaginationText[len(splitPaginationText)-3], ",", "", -1))
-	if err != nil {
-		log.Fatalf("Could not get current list count: %v", err)
-	}
 
 	totalListCount, err := strconv.Atoi(strings.Replace(splitPaginationText[len(splitPaginationText)-1], ",", "", -1))
 	if err != nil {
 		log.Fatalf("Could not get total list count: %v", err)
 	}
 
-	fmt.Println("CURRENT LIST COUNT ",currentListCount)
-	fmt.Println("TOTAL LIST COUNT ",totalListCount)
-
-	return dataEntries, currentListCount, totalListCount
+	return dataEntries, totalListCount
 }
 
 func createDataEntry(liInnerSplit []string) (dataEntry DaftComponents) {
@@ -175,7 +182,7 @@ func createDataEntry(liInnerSplit []string) (dataEntry DaftComponents) {
 	// 	liInnerSplit[5],
 	// 	liInnerSplit[6],
 	// }
-	fmt.Println(liInnerSplit, "\n\n****************************************\n\n")
+	fmt.Println(liInnerSplit, "\n\n****************************************\n")
 	return dataEntry
 }
 
