@@ -13,7 +13,7 @@ import (
 	"github.com/playwright-community/playwright-go"
 )
 
-var propertyType string = "rent"
+var forSaleRent string = "rent"
 var PlaywrightContext playwright.BrowserContext
 var counties = map[string]bool {
 	"Cork":true, 
@@ -83,7 +83,7 @@ func Scrape() {
 	defer PlaywrightContext.Close()
 
 	//now we scrape!
-	scrapeUrl := fmt.Sprintf("https://www.daft.ie/property-for-%v/ireland", propertyType)
+	scrapeUrl := fmt.Sprintf("https://www.daft.ie/property-for-%v/ireland", forSaleRent)
 	compArr, totalListing := pageScrape(scrapeUrl, PlaywrightContext)
 	fmt.Println("scrapeurl = ", scrapeUrl)
 	pageCount:= totalListing/20;
@@ -148,11 +148,17 @@ func pageScrapeIncrement(ctx playwright.BrowserContext,initial int, limit int) (
 func pageScrape(url string, ctx playwright.BrowserContext) (data []DaftComponents, totalPageCount int ) {
 	// Created a new page from the context we initialized
 	page, err := ctx.NewPage()
-
 	if err != nil {
 		log.Fatalf("could not create page: %v", err)
 	}
+	 closePage := func(page playwright.Page){
+		err :=  page.Close()
+		if err != nil {
+			fmt.Print(err)
+		}
+	}
 
+	defer closePage(page)
 	// Navigates to the Corporate Announcements Page
 	errorreolwa2235 := true
 	errCount := 0
